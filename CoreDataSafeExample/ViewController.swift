@@ -18,6 +18,7 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
     //private var authors : [Author]!
 
     @IBOutlet weak var tableView:UITableView!
+    @IBOutlet weak var notesLabel: UILabel!
     
     lazy private var fetchedResultsController: NSFetchedResultsController = self.currentFetchResultsController()
     
@@ -104,6 +105,16 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
         return fetchedResultsController
     }
     
+    // MAK: - IBActions
+    @IBAction func threadsSegChanged(sender: UISegmentedControl) {
+    }
+    
+    @IBAction func speedSegChanged(sender: UISegmentedControl) {
+    }
+    @IBAction func infoAction() {
+    }
+    @IBAction func resetAction() {
+    }
 }
 // MARK: - Test Data Creation
 extension ViewController {
