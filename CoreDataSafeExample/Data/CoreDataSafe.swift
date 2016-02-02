@@ -126,6 +126,23 @@ public class CoreDataSafe {
                 fatalError("CoreDataSafe.init:addPersistentStoreWithType failure unknown type")
             }
         }
+// The CoreData standard is that background context's updates propagate to their parent context's but
+// they do _not_ result in faults so UI elements are not automatically updated. The code below is meant
+// as a work around to this condition, but does not seem to necessarily update the correct object.
+//
+//        NSNotificationCenter.defaultCenter().addObserverForName(NSManagedObjectContextObjectsDidChangeNotification, object: nil, queue: nil) { notification in
+//            if let sourceContext = notification.object as? NSManagedObjectContext {
+//                if sourceContext == mainMoc {
+//                    mainMoc.performBlockAndWait() {
+//                        mainMoc.mergeChangesFromContextDidSaveNotification(notification)
+//                        mainMoc.processPendingChanges()
+//                    }
+//                }
+//            }
+//        }
+//    }
+//    deinit {
+//        NSNotificationCenter.defaultCenter().removeObserver(self)
     }
     public func createEntity(typeName:String) -> NSManagedObject {
         guard let entityDescription = NSEntityDescription.entityForName(typeName, inManagedObjectContext:mainMoc) else {

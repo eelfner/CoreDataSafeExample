@@ -2,7 +2,7 @@
 //  Author+CoreDataProperties.swift
 //  CoreDataSafeExample
 //
-//  Created by Eric Elfner on 2016-02-01.
+//  Created by Eric Elfner on 2016-02-02.
 //  Copyright © 2016 Eric Elfner. All rights reserved.
 //
 //  Choose "Create NSManagedObject Subclass…" from the Core Data editor menu
