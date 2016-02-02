@@ -21,6 +21,7 @@
 		B6BBC6641C5FB0070068CC17 /* Book.swift in Sources */ = {isa = PBXBuildFile; fileRef = B6BBC6611C5FB0070068CC17 /* Book.swift */; };
 		B6BBC6651C5FB0070068CC17 /* CoreDataTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B6BBC6621C5FB0070068CC17 /* CoreDataTests.swift */; };
 		B6BBC6681C5FB6D60068CC17 /* TestModel.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = B6BBC6661C5FB6D60068CC17 /* TestModel.xcdatamodeld */; };
+		B6BBC66E1C614D060068CC17 /* README.md in Sources */ = {isa = PBXBuildFile; fileRef = B6BBC66D1C614D060068CC17 /* README.md */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -52,6 +53,7 @@
 		B6BBC6611C5FB0070068CC17 /* Book.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Book.swift; sourceTree = "<group>"; };
 		B6BBC6621C5FB0070068CC17 /* CoreDataTests.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CoreDataTests.swift; sourceTree = "<group>"; };
 		B6BBC6671C5FB6D60068CC17 /* TestModel.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = TestModel.xcdatamodel; sourceTree = "<group>"; };
+		B6BBC66D1C614D060068CC17 /* README.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -75,6 +77,7 @@
 		B6BBC60A1C5E4C590068CC17 = {
 			isa = PBXGroup;
 			children = (
+				B6BBC66D1C614D060068CC17 /* README.md */,
 				B6BBC6151C5E4C590068CC17 /* CoreDataSafeExample */,
 				B6BBC6571C5FAFD00068CC17 /* CoreDataSafeTests */,
 				B6BBC6141C5E4C590068CC17 /* Products */,
@@ -246,6 +249,7 @@
 			files = (
 				B6BBC6681C5FB6D60068CC17 /* TestModel.xcdatamodeld in Sources */,
 				B6BBC6651C5FB0070068CC17 /* CoreDataTests.swift in Sources */,
+				B6BBC66E1C614D060068CC17 /* README.md in Sources */,
 				B6BBC6641C5FB0070068CC17 /* Book.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
