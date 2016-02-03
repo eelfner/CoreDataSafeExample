@@ -303,7 +303,7 @@ extension ViewController {
         return authors
     }
     private func createTestAuthor(name:String) -> Author {
-        let author = coreDataSafe.createEntity("Author") as! Author
+        let author:Author = coreDataSafe.createEntity()
         author.name = name
         coreDataSafe.saveMainMocAsync()
         
@@ -319,7 +319,7 @@ extension ViewController {
     private func createTestBook(iBook:Int, forAuthor:Author) -> Book {
         let titleWordCount = 2 + Int(arc4random_uniform(UInt32(4)))
         
-        let book = coreDataSafe.createEntity("Book") as! Book
+        let book:Book = coreDataSafe.createEntity()
         book.title = randomWordPhraseOfLength(titleWordCount).capitalizedString
         book.comment = randomWordPhraseOfLength(6 + titleWordCount)
         book.author = forAuthor

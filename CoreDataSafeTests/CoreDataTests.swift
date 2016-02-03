@@ -38,7 +38,7 @@ class CoreDataTests: XCTestCase
         let expectionDelete = expectationWithDescription("deleted")
         
         // Create
-        let book:Book = coreDataMgr.createEntity("Book") as! Book
+        let book:Book = coreDataMgr.createEntity()
         let time = NSDate().timeIntervalSince1970
         let title = "Title at \(time)"
         book.title = title
@@ -90,7 +90,7 @@ class CoreDataTests: XCTestCase
         print("Testing with [\(MAX_BOOKS)] books, [\(MAX_THREADS)] worker threads running [\(MAX_OPS)] updates each.")
         
         for i in 0 ..< MAX_BOOKS {
-            let book:Book = coreDataMgr.createEntity("Book") as! Book
+            let book:Book = coreDataMgr.createEntity()
             book.title = "Book\(String(format: "%03d", i))"
         }
         try! coreDataMgr.mainMoc.save()
@@ -151,7 +151,7 @@ class CoreDataTests: XCTestCase
         let expectionCheckedAll = expectationWithDescription("expectionCheckedAll")
         
         // Create
-        let book:Book = coreDataMgr.createEntity("Book") as! Book
+        let book:Book = coreDataMgr.createEntity()
         let time = NSDate().timeIntervalSince1970
         let title = "Title at \(time)"
         book.title = title
