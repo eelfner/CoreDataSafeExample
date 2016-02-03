@@ -131,7 +131,7 @@ public class CoreDataSafe {
         
         let typeName = "\(T.self)"
         guard let entityDescription = NSEntityDescription.entityForName(typeName, inManagedObjectContext:mainMoc) else {
-            fatalError("NSManagedObject named \typeName) doesn't exist.")
+            fatalError("NSManagedObject named \(typeName) doesn't exist.")
         }
         let any = NSManagedObject(entity:entityDescription, insertIntoManagedObjectContext:mainMoc)
         
