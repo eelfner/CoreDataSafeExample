@@ -5,60 +5,64 @@
 //  Created by Eric Elfner on 2015-11-25.
 //  Copyright © 2015 Eric Elfner. All rights reserved.
 //
-// This "Core Data Stack" is inspired by Marcus Zarra (http://martiancraft.com/blog/2015/03/core-data-stack/)
-// and work done by Big Nerd Ranch https://www.bignerdranch.com/blog/introducing-the-big-nerd-ranch-core-data-stack/.
-// The BNR work seems to me to be way over the top and uses more complex Swift idioms than is necessary.
-// This class attempts to follow Zarra's words of wisdom, but make the coding as simple as possible.
-//
-// Overview: PSC 
-//              ↖︎privateMOC
-//                    ↖︎mainMOC (UI+quick ops)
-//                         ↖︎ tempBackgroundMOC1 (No UI)
-//                         ↖︎ tempBackgroundMOC2 (No UI)
-//                         ↖︎ ...
-//
-// The main tenets of this code as I see them are:
-//   - The privateMOC is just for persisting to disk in the background.
-//   - The mainMoc is Source of Truth and should be connected to the UI.
-//   - New temporaryBackgroundMOCs should be used for all background code based data manipulation.
-//   - Merge by MergeByPropertyObjectTrumpMergePolicyType, so no errors, last update (by field) wins.
-//   - The mainMoc and temporaryBackgroundMOCs automatically trigger saves all the way to the PSC.
-//   -
-//
-// Overview:
-//  - Only 4 public access points:
-//    - init() Creates and Sqlite backed data source with the mainMoc.
-//    - mainMoc The main object context that runs on the main thread. Use for UI and quick operations.
-//    - temporaryBackgroundMOC() Creates a background moc for use on background threads.
-//    - createEntity() Helper method to create new entities. Not required.
-//    - saveMainMocAsync() Helper method to allow easy async saves and either global or no error handling.
-//
-// Simple Usage:
-// let coreDataSafe = CoreDataSafe(dbName:"MyModel")
-// let book:Book = coreDataSafe.createEntity("Book") as! Book
-// book.title = "The World According to Garp"
-// coreDataSafe.saveMainMocAsync()
-//
-//let fetchRequest = NSFetchRequest(entityName:"Book")
-//let results = try! coreDataSafe.mainMoc.executeFetchRequest(fetchRequest)
-//
-//let backGroundQueue = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0)
-//dispatch_async(backGroundQueue) {
-//    let backgroundMoc = coreDataSafe.temporaryBackgroundMOC(name:"T")
-//    
-//    let fetchRequest = NSFetchRequest(entityName:"Book")
-//    do {
-//        let results =  try backgroundMoc.executeFetchRequest(fetchRequest)
-//        let books = results as! [Book]
-//        ...
-//        //background updates
-//        try backgroundMoc.save()
-//    }
-//    catch let error as NSError {
-//        print("runBookUpdates error: \(error), \(error.userInfo)")
-//    }
-//}
+/**
+ This "Core Data Stack" is inspired by Marcus Zarra (http://martiancraft.com/blog/2015/03/core-data-stack/)
+ and work done by Big Nerd Ranch https://www.bignerdranch.com/blog/introducing-the-big-nerd-ranch-core-data-stack/.
+ The BNR work seems to me to be way over the top and uses more complex Swift idioms than is necessary.
+ This class attempts to follow Zarra's words of wisdom, but make the coding as simple as possible.
+ 
+ My belief is that 98% of iOS Apps only need this level of complexity.
 
+ Overview: PSC 
+              ↖︎privateMOC
+                    ↖︎mainMOC (UI+quick ops)
+                         ↖︎ tempBackgroundMOC1 (No UI)
+                         ↖︎ tempBackgroundMOC2 (No UI)
+                         ↖︎ ...
+
+ The main tenets of this code as I see them are:
+   - The privateMOC is just for persisting to disk in the background.
+   - The mainMoc is Source of Truth and should be connected to the UI.
+   - New temporaryBackgroundMOCs should be used for all background code based data manipulation.
+   - Merge by MergeByPropertyObjectTrumpMergePolicyType, so no errors, last update (by field) wins.
+   - The mainMoc and temporaryBackgroundMOCs automatically trigger saves all the way to the PSC.
+   - No CoreData errors... well you still need to handle objects on the right threads.
+   - Ability to add single global error handler to allow notify user in cases of rare unexpected errors.
+
+ Overview:
+  - Only 4 public access points:
+    - init() Creates and Sqlite backed data source with the mainMoc.
+    - mainMoc The main object context that runs on the main thread. Use for UI and quick operations.
+    - temporaryBackgroundMOC() Creates a background moc for use on background threads.
+    - createEntity() Helper method to create new entities. Not required.
+    - saveMainMocAsync() Helper method to allow easy async saves and either global or no error handling.
+
+ Simple Usage:
+ let coreDataSafe = CoreDataSafe(dbName:"MyModel")
+ let book:Book = coreDataSafe.createEntity()
+ book.title = "The World According to Garp"
+ coreDataSafe.saveMainMocAsync()
+
+let fetchRequest = NSFetchRequest(entityName:"Book")
+let results = try! coreDataSafe.mainMoc.executeFetchRequest(fetchRequest)
+
+let backGroundQueue = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0)
+dispatch_async(backGroundQueue) {
+    let backgroundMoc = coreDataSafe.temporaryBackgroundMOC(name:"T")
+    
+    let fetchRequest = NSFetchRequest(entityName:"Book")
+    do {
+        let results =  try backgroundMoc.executeFetchRequest(fetchRequest)
+        let books = results as! [Book]
+        ...
+        //background updates
+        try backgroundMoc.save()
+    }
+    catch let error as NSError {
+        print("runBookUpdates error: \(error), \(error.userInfo)")
+    }
+}
+*/
 
 // Notes:
 //  - Needs testing and work on migrations.
