@@ -40,17 +40,16 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
         
         logTimer = NSTimer.scheduledTimerWithTimeInterval(1.0, target: self, selector: "logTimerAction", userInfo: nil, repeats: true)
         
-        // The standard for CoreData is that for performance reasons, background context updates that are propagated to the mainContext
-        // does _not_ result in object faults.
-        NSNotificationCenter.defaultCenter().addObserverForName(NSManagedObjectContextObjectsDidChangeNotification, object: nil, queue: nil) { notification in
-            if self.operationUpdateUI {
-                if let sourceContext = notification.object as? NSManagedObjectContext {
-                    if sourceContext == self.coreDataSafe.mainMoc {
-                        self.tableView.reloadData()
-                    }
-                }
-            }
-        }
+//        // The standard for CoreData is that for performance reasons, background context updates that are propagated to the mainContext do _not_ result in object faults. The code here, now with NSFetchedResultsControllerDelegate, does pick up those changes so the UI can be updated. Therefore, we do not need this observer.
+//        NSNotificationCenter.defaultCenter().addObserverForName(NSManagedObjectContextObjectsDidChangeNotification, object: nil, queue: nil) { notification in
+//            if self.operationUpdateUI {
+//                if let sourceContext = notification.object as? NSManagedObjectContext {
+//                    if sourceContext == self.coreDataSafe.mainMoc {
+//                        self.tableView.reloadData()
+//                    }
+//                }
+//            }
+//        }
 
         try! fetchedResultsController.performFetch()
         
@@ -97,6 +96,12 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
         cell.textLabel?.text = book.title
         cell.detailTextLabel?.text = "\(book.pageCount ?? 0)pp: " + (book.comment ?? "")
     }
+    func sectionIndexTitlesForTableView(tableView: UITableView) -> [String]? {
+        return fetchedResultsController.sectionIndexTitles
+    }
+    func tableView(tableView: UITableView, sectionForSectionIndexTitle title: String, atIndex index: Int) -> Int {
+        return fetchedResultsController.sectionForSectionIndexTitle(title, atIndex: index)
+    }
     
     // MARK: - NSFetchedResultsControllerDelegate
     
@@ -108,27 +113,38 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
         tableView.endUpdates()
     }
     
-    func controller(controller: NSFetchedResultsController, didChangeObject anObject: AnyObject, atIndexPath indexPath: NSIndexPath?, forChangeType type: NSFetchedResultsChangeType, newIndexPath: NSIndexPath?) {
-        if let indexPath = newIndexPath {
-            switch (type) {
-            case .Insert: tableView.insertRowsAtIndexPaths([indexPath], withRowAnimation: .Fade)
-            case .Delete:
-                //if tableView.numberOfRowsInSection(indexPath.section) > 1 {
-                    tableView.deleteRowsAtIndexPaths([indexPath], withRowAnimation: .Fade)
-                //}
-                //else if tableView.numberOfSections > 1 { // Don't delete last section
-                //    tableView.deleteSections(NSIndexSet(index: indexPath.section), withRowAnimation: .Fade)
-                //}
-            case .Update:
-                let cell = tableView.cellForRowAtIndexPath(indexPath)!
-                configureCell(cell, indexPath:indexPath)
-            case .Move:
-                tableView.deleteRowsAtIndexPaths([indexPath], withRowAnimation: .Fade)
-                
-                if let newIndexPath = newIndexPath {
-                    tableView.insertRowsAtIndexPaths([newIndexPath], withRowAnimation: .Fade)
-                }
+    func controller(controller:NSFetchedResultsController, didChangeObject anObject:AnyObject, atIndexPath indexPath:NSIndexPath?, forChangeType type:NSFetchedResultsChangeType, newIndexPath: NSIndexPath?) {
+        switch(type) {
+        case .Insert:
+            if let newIndexPath = newIndexPath {
+                tableView.insertRowsAtIndexPaths([newIndexPath], withRowAnimation:.Fade)
             }
+        case .Delete:
+            if let indexPath = indexPath {
+                tableView.deleteRowsAtIndexPaths([indexPath], withRowAnimation:.Fade)
+            }
+        case .Update:
+            if let indexPath = indexPath, cell = tableView.cellForRowAtIndexPath(indexPath) {
+                configureCell(cell, indexPath:indexPath)
+            }
+        case .Move:
+            if let indexPath = indexPath, newIndexPath = newIndexPath {
+                tableView.deleteRowsAtIndexPaths([indexPath], withRowAnimation:.Fade)
+                tableView.insertRowsAtIndexPaths([newIndexPath], withRowAnimation:.Fade)
+                
+            }
+        }
+    }
+    
+    func controller(controller:NSFetchedResultsController, didChangeSection sectionInfo:NSFetchedResultsSectionInfo, atIndex sectionIndex:Int, forChangeType type:NSFetchedResultsChangeType) {
+        switch(type) {
+        case .Insert:
+            tableView.insertSections(NSIndexSet(index:sectionIndex), withRowAnimation:.Fade)
+            
+        case .Delete:
+            tableView.deleteSections(NSIndexSet(index:sectionIndex), withRowAnimation: .Fade)
+        default:
+            break
         }
     }
     
@@ -230,6 +246,15 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
     // MARK: - Helpers
     
     private func updateRandomBookInBackground() {
+        let iRand = Int(arc4random_uniform(4))
+        switch (iRand) {
+        case 0: addRandomBookInBackground()
+        case 1: deleteRandomBookInBackground()
+        default: updateRandomBookTitle()
+        }
+    }
+    private func updateRandomBookTitle() {
+        print(__FUNCTION__)
         let backgroundMoc1 = coreDataSafe.temporaryBackgroundMOC(name:"T-BackgroundUpdate")
         
         let fetchRequest1 = NSFetchRequest(entityName:"Book")
@@ -244,7 +269,7 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
                 let randomSize = 1 + Int(arc4random_uniform(UInt32(6)))
                 randomBook.comment = randomWordPhraseOfLength(randomSize)
                 try backgroundMoc1.save()
-                //print("updateRandomBookInBackground book: \(randomBook.title)")
+                print("updateRandomBookInBackground book: \(randomBook.title)")
             }
         }
         catch let error as NSError {
@@ -252,25 +277,50 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
         }
         ++logTimerEvents
     }
-//    private func deleteRandomBookInBackground() {
-//        let backgroundMoc2 = coreDataSafe.temporaryBackgroundMOC(name:"T-BackgroundDelete")
-//        
-//        let fetchRequest2 = NSFetchRequest(entityName:"Book")
-//        do {
-//            let results =  try backgroundMoc2.executeFetchRequest(fetchRequest2)
-//            let books = results as! [Book]
-//            
-//            let randomIndex = Int(arc4random_uniform(UInt32(books.count)))
-//            let randomBook = books[randomIndex]
-//            backgroundMoc2.deleteObject(randomBook)
-//            try backgroundMoc2.save()
-//            print("book[\(randomIndex)] deleted")
-//        }
-//        catch let error as NSError {
-//            print("runBookUpdates error: \(error), \(error.userInfo)")
-//        }
-//        
-//    }
+    private func deleteRandomBookInBackground() {
+        print(__FUNCTION__)
+        let backgroundMoc2 = coreDataSafe.temporaryBackgroundMOC(name:"T-BackgroundDelete")
+        
+        let fetchRequest2 = NSFetchRequest(entityName:"Book")
+        do {
+            let results =  try backgroundMoc2.executeFetchRequest(fetchRequest2)
+            let books = results as! [Book]
+            
+            let randomIndex = Int(arc4random_uniform(UInt32(books.count)))
+            let randomBook = books[randomIndex]
+            backgroundMoc2.deleteObject(randomBook)
+            try backgroundMoc2.save()
+            print("book[\(randomIndex)] deleted")
+        }
+        catch let error as NSError {
+            print("runBookUpdates error: \(error), \(error.userInfo)")
+        }
+    }
+    private func addRandomBookInBackground() {
+        print(__FUNCTION__)
+        let backgroundMoc2 = coreDataSafe.temporaryBackgroundMOC(name:"T-BackgroundAdd")
+        
+        let fetchRequest2 = NSFetchRequest(entityName:"Author")
+        do {
+            let results =  try backgroundMoc2.executeFetchRequest(fetchRequest2)
+            let authors = results as! [Author]
+            
+            let randomIndex = Int(arc4random_uniform(UInt32(authors.count)))
+            let randomAuthor = authors[randomIndex]
+            
+            let titleWordCount = 2 + Int(arc4random_uniform(UInt32(4)))
+            let book:Book = coreDataSafe.createEntity(backgroundMoc2)
+            book.title = randomWordPhraseOfLength(titleWordCount).capitalizedString
+            book.comment = randomWordPhraseOfLength(6 + titleWordCount)
+            book.author = randomAuthor
+            book.pageCount = NSNumber(unsignedInt: 100 + arc4random_uniform(UInt32(500)))
+            try backgroundMoc2.save()
+            print("book[\(book.title)] added for \(randomAuthor.name)")
+        }
+        catch let error as NSError {
+            print("addRandomBookInBackground error: \(error), \(error.userInfo)")
+        }
+    }
 
     private func deleteAllBooks(completion:(bSuccess:Bool) -> Void) {
         let fetchRequest = NSFetchRequest(entityName:"Book")
@@ -321,14 +371,14 @@ extension ViewController {
         
         var books = [Book]()
         let authorBookCount = 1 + Int(arc4random_uniform(UInt32(kMaxTestBooksPerAuthor)))
-        for iBook in 0 ..< authorBookCount {
-            books.append(createTestBook(iBook, forAuthor:author))
+        for _ in 0 ..< authorBookCount {
+            books.append(createTestBook(author))
         }
         author.books = NSOrderedSet(array:books)
         coreDataSafe.saveMainMocAsync()
         return author
     }
-    private func createTestBook(iBook:Int, forAuthor:Author) -> Book {
+    private func createTestBook(forAuthor:Author) -> Book {
         let titleWordCount = 2 + Int(arc4random_uniform(UInt32(4)))
         
         let book:Book = coreDataSafe.createEntity()
