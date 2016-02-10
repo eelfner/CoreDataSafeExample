@@ -131,13 +131,14 @@ public class CoreDataSafe {
             }
         }
     }
-    func createEntity<T:NSManagedObject>() -> T {
+    func createEntity<T:NSManagedObject>(inContext:NSManagedObjectContext? = nil) -> T {
         
         let typeName = "\(T.self)"
         guard let entityDescription = NSEntityDescription.entityForName(typeName, inManagedObjectContext:mainMoc) else {
             fatalError("NSManagedObject named \(typeName) doesn't exist.")
         }
-        let any = NSManagedObject(entity:entityDescription, insertIntoManagedObjectContext:mainMoc)
+        let moc = inContext ?? mainMoc
+        let any = NSManagedObject(entity:entityDescription, insertIntoManagedObjectContext:moc)
         
         return any as! T
     }
