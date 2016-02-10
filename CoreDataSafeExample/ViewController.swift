@@ -13,6 +13,8 @@ private let kTestAuthors = ["Joan Slater", "William Newman", "Ella Nash", "Penel
 private let kMaxTestBooksPerAuthor = 5
 private let kTestBooksWords = "Lorem ipsum dolor sit amet consectetur adipiscing elit sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur Excepteur sint occaecat cupidatat non proident sunt in culpa qui officia deserunt mollit anim id est laborum".characters.split(" ").map(String.init)
 
+enum BackgroundDaemonState {case Stopped, Running, Stoping}
+
 class ViewController: UIViewController, UITableViewDataSource, UITableViewDelegate, NSFetchedResultsControllerDelegate {
 
     private let coreDataSafe = CoreDataSafe(dbName: "Books")
@@ -25,8 +27,6 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
     private var logTimer:NSTimer!
     private var logTimerEvents = 0
     
-    //private var authors : [Author]!
-
     @IBOutlet weak var tableView:UITableView!
     @IBOutlet weak var notesLabel: UILabel!
     @IBOutlet weak var threadSegmentedControl: UISegmentedControl!
@@ -52,9 +52,9 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
             }
         }
 
-        
-        //authors = createTestAuthors()
         try! fetchedResultsController.performFetch()
+        
+        self.runBackgroundDaemon()
     }
 
     // MARK: - UITableViewDelegate and DataSource
@@ -147,13 +147,12 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
     // MARK: - IBActions
     @IBAction func threadsSegChanged(segmentedControl: UISegmentedControl) {
         let kThreadSelections = [0, 1, 5, 10, 20]
-        operationThreadCount = kThreadSelections[segmentedControl.selectedSegmentIndex]
-        
-        updateBackgroundActivity()
+        let threadCount = kThreadSelections[segmentedControl.selectedSegmentIndex]
+        resetBackgroundDaemon(threadCount, completion: nil)
     }
     @IBAction func speedSegChanged(speedSegControl: UISegmentedControl) {
         operationSpeed = speedSegControl.selectedSegmentIndex
-        updateBackgroundActivity()
+        // will be picked up automatically by backgroundDaemon
     }
     
     @IBAction func infoAction() {
@@ -161,8 +160,7 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
     
     @IBAction func resetAction() {
         threadSegmentedControl.selectedSegmentIndex = 0
-        operationThreadCount = 0
-        updateBackgroundActivity() {
+        resetBackgroundDaemon(0) {
             self.reset()
         }
     }
@@ -182,32 +180,46 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
     @IBAction func uiSegOnAction(segmentedControl: UISegmentedControl) {
         operationUpdateUI = (segmentedControl.selectedSegmentIndex == 0)
     }
-    private func updateBackgroundActivity(completionBlock: (() -> ())? = nil) {
-        
+    
+    // MARK - BackgroundDaemon
+    
+    //Runs continuously - A curious path led me to this implementation. NSTimers need a run loop which is usually the
+    //  main run loop. The timers were calling a selector (@objc func) here, but that would interfer with 
+    //  NSOperationQueue.waitUntilAllOperationsAreFinished() also running on the main threa
+    private func runBackgroundDaemon() {
         let backGroundQueue = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0)
         dispatch_async(backGroundQueue) {
-            self.operationQueue.cancelAllOperations()
-            print("Stopping background operations")
-            self.operationQueue.waitUntilAllOperationsAreFinished()
-            print("Background operations stopped")
-            self.operationQueue.maxConcurrentOperationCount = self.operationThreadCount
-            
-            for _ in 0 ..< self.operationThreadCount {
-                let op = NSBlockOperation()
-                op.addExecutionBlock() { self.backgroundUpdateWithSpeedLevel(self.operationSpeed, inOperation:op) }
-                self.operationQueue.addOperation(op)
-            }
-            if completionBlock != nil {
-                completionBlock!()
+            NSThread.currentThread().name = "BackgroundDaemon"
+            while (true) {
+                while (self.operationQueue.operationCount < self.operationThreadCount) {
+                    self.operationQueue.maxConcurrentOperationCount = self.operationThreadCount
+                    let op = NSBlockOperation()
+                    op.qualityOfService = .Background
+                    op.queuePriority = .Normal
+                    op.addExecutionBlock() { self.updateRandomBookInBackground() }
+                    self.operationQueue.addOperation(op)
+                }
+
+                let sleepTimes = [0.5, 0.1, 0.05]
+                let sleepTimeIndex = min(sleepTimes.count - 1, max(0, self.operationSpeed)) // 0...2
+                let sleepTime = sleepTimes[sleepTimeIndex]
+
+                NSThread.sleepForTimeInterval(sleepTime)
             }
         }
     }
-    private func backgroundUpdateWithSpeedLevel(iSpeed:Int, inOperation:NSOperation) {
-        while (!inOperation.cancelled) {
-            let sleepTimes = [0.5, 0.05, 0.001]
-            let sleepTime = sleepTimes[min(sleepTimes.count - 1, max(0, iSpeed))]
-            NSThread.sleepForTimeInterval(sleepTime)
-            updateRandomBookInBackground()
+    private func resetBackgroundDaemon(operationCount:Int, completion:(()->())? = nil) {
+        let backGroundQueue = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0)
+        dispatch_async(backGroundQueue) {
+            NSThread.currentThread().name = "BackgroundReset"
+            self.operationThreadCount = 0 // Stop filling
+            self.operationQueue.cancelAllOperations()
+            self.operationQueue.waitUntilAllOperationsAreFinished()
+            
+            self.operationThreadCount = operationCount // Restart filling
+            if (completion != nil) {
+                completion!()
+            }
         }
     }
     func logTimerAction() {
