@@ -69,6 +69,12 @@
                                         <color key="textColor" red="0.3645928376" green="0.44984603099999998" blue="0.66446167879999996" alpha="0.5" colorSpace="calibratedRGB"/>
                                         <nil key="highlightedColor"/>
                                     </label>
+                                    <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Books..." textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" minimumScaleFactor="0.5" translatesAutoresizingMaskIntoConstraints="NO" id="NiC-JH-ppo">
+                                        <rect key="frame" x="210" y="44" width="102" height="22"/>
+                                        <fontDescription key="fontDescription" name="AvenirNextCondensed-Regular" family="Avenir Next Condensed" pointSize="16"/>
+                                        <color key="textColor" red="0.3645928376" green="0.44984603099999998" blue="0.66446167879999996" alpha="0.5" colorSpace="calibratedRGB"/>
+                                        <nil key="highlightedColor"/>
+                                    </label>
                                     <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="pjb-HI-Lcd">
                                         <rect key="frame" x="203" y="4" width="39" height="30"/>
                                         <state key="normal" title="Reset"/>
@@ -76,16 +82,6 @@
                                             <action selector="resetAction" destination="BYZ-38-t0r" eventType="touchUpInside" id="cMX-uU-Ai0"/>
                                         </connections>
                                     </button>
-                                    <segmentedControl opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="left" contentVerticalAlignment="top" apportionsSegmentWidthsByContent="YES" segmentControlStyle="plain" selectedSegmentIndex="0" translatesAutoresizingMaskIntoConstraints="NO" id="GCe-EW-AhE">
-                                        <rect key="frame" x="208" y="41" width="87" height="29"/>
-                                        <segments>
-                                            <segment title="UI: On"/>
-                                            <segment title="Off"/>
-                                        </segments>
-                                        <connections>
-                                            <action selector="uiSegOnAction:" destination="BYZ-38-t0r" eventType="valueChanged" id="hBJ-24-o9l"/>
-                                        </connections>
-                                    </segmentedControl>
                                 </subviews>
                                 <color key="backgroundColor" red="0.96862745100000003" green="0.81960784310000001" blue="0.41960784309999999" alpha="1" colorSpace="calibratedRGB"/>
                                 <color key="tintColor" red="0.090196078430000007" green="0.25490196079999999" blue="0.45098039220000002" alpha="1" colorSpace="calibratedRGB"/>
@@ -101,16 +97,17 @@
                                     <constraint firstAttribute="height" constant="120" id="JoA-xo-a6x"/>
                                     <constraint firstItem="8hK-Q4-YLC" firstAttribute="leading" secondItem="iYD-Te-bPd" secondAttribute="leading" constant="8" id="KCD-rT-yL9"/>
                                     <constraint firstAttribute="width" constant="300" id="Rt3-MO-TSt"/>
-                                    <constraint firstItem="GCe-EW-AhE" firstAttribute="top" secondItem="AQ0-O8-1CS" secondAttribute="top" id="XeD-Mf-ESI"/>
                                     <constraint firstItem="pjb-HI-Lcd" firstAttribute="leading" secondItem="8hK-Q4-YLC" secondAttribute="trailing" constant="11" id="bON-jT-pNm"/>
                                     <constraint firstItem="AQ0-O8-1CS" firstAttribute="top" secondItem="xLD-LX-Egz" secondAttribute="bottom" constant="7" id="c3Z-E3-aM5"/>
-                                    <constraint firstItem="GCe-EW-AhE" firstAttribute="leading" secondItem="AQ0-O8-1CS" secondAttribute="trailing" constant="6" id="cOO-g3-jNq"/>
                                     <constraint firstItem="pjb-HI-Lcd" firstAttribute="centerY" secondItem="8hK-Q4-YLC" secondAttribute="centerY" id="eSt-cI-AhD"/>
                                     <constraint firstItem="AQ0-O8-1CS" firstAttribute="leading" secondItem="iYD-Te-bPd" secondAttribute="leading" constant="8" id="fRj-vU-Mxh"/>
+                                    <constraint firstItem="NiC-JH-ppo" firstAttribute="centerY" secondItem="AQ0-O8-1CS" secondAttribute="centerY" id="flV-fs-Z5d"/>
                                     <constraint firstAttribute="height" constant="120" id="j2S-2u-2bt"/>
                                     <constraint firstItem="W7h-H0-CDu" firstAttribute="leading" secondItem="HBh-GB-dvB" secondAttribute="trailing" constant="8" id="jZs-1I-d49"/>
                                     <constraint firstItem="8hK-Q4-YLC" firstAttribute="top" secondItem="iYD-Te-bPd" secondAttribute="top" constant="8" id="ksz-Yh-TgJ"/>
                                     <constraint firstItem="xLD-LX-Egz" firstAttribute="leading" secondItem="8hK-Q4-YLC" secondAttribute="trailing" priority="750" constant="81" id="pA7-kI-t7I"/>
+                                    <constraint firstAttribute="trailing" secondItem="NiC-JH-ppo" secondAttribute="trailing" constant="8" id="tAH-nR-hR9"/>
+                                    <constraint firstItem="NiC-JH-ppo" firstAttribute="leading" secondItem="AQ0-O8-1CS" secondAttribute="trailing" constant="8" id="xtg-qY-Krh"/>
                                 </constraints>
                                 <variation key="default">
                                     <mask key="constraints">
@@ -232,6 +229,7 @@
                     <freeformSimulatedSizeMetrics key="simulatedDestinationMetrics"/>
                     <size key="freeformSize" width="400" height="400"/>
                     <connections>
+                        <outlet property="booksLabel" destination="NiC-JH-ppo" id="1EH-F4-Kr9"/>
                         <outlet property="notesLabel" destination="W7h-H0-CDu" id="Syc-eZ-IzL"/>
                         <outlet property="speedSegmentedControl" destination="HBh-GB-dvB" id="5yO-aa-29e"/>
                         <outlet property="tableView" destination="xwF-XZ-f6n" id="yPe-9B-MRq"/>

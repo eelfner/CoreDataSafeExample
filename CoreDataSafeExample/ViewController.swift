@@ -28,7 +28,8 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
     private var logTimerEvents = 0
     
     @IBOutlet weak var tableView:UITableView!
-    @IBOutlet weak var notesLabel: UILabel!
+    @IBOutlet weak var booksLabel:UILabel!
+    @IBOutlet weak var notesLabel:UILabel!
     @IBOutlet weak var threadSegmentedControl: UISegmentedControl!
     @IBOutlet weak var speedSegmentedControl: UISegmentedControl!
     
@@ -241,6 +242,7 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
     func logTimerAction() {
         let speed = ["Slow","Mod","Fast"][operationSpeed]
         notesLabel.text = "\(operationThreadCount)T@\(speed): \(logTimerEvents) events/sec"
+        booksLabel.text = "Books: \(self.fetchedResultsController.fetchedObjects?.count ?? 0)"
         logTimerEvents = 0
     }
     // MARK: - Helpers
