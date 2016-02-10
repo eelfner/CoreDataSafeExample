@@ -57,6 +57,16 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
         self.runBackgroundDaemon()
     }
 
+    // Force Settings to always show as Popover, even on iPhone because we like it that way.
+    override func prepareForSegue(segue: UIStoryboardSegue, sender: AnyObject?) {
+        // Simple class for
+        if segue.identifier == "ShowInfo" {
+            let popoverViewController = segue.destinationViewController
+            popoverViewController.modalPresentationStyle = UIModalPresentationStyle.Popover
+            popoverViewController.popoverPresentationController!.delegate = self
+        }
+    }
+
     // MARK: - UITableViewDelegate and DataSource
     
     func numberOfSectionsInTableView(tableView: UITableView) -> Int {
@@ -172,9 +182,6 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
         // will be picked up automatically by backgroundDaemon
     }
     
-    @IBAction func infoAction() {
-    }
-    
     @IBAction func resetAction() {
         threadSegmentedControl.selectedSegmentIndex = 0
         resetBackgroundDaemon(0) {
@@ -256,7 +263,7 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
         }
     }
     private func updateRandomBookTitle() {
-        print(__FUNCTION__)
+        //print(__FUNCTION__)
         let backgroundMoc1 = coreDataSafe.temporaryBackgroundMOC(name:"T-BackgroundUpdate")
         
         let fetchRequest1 = NSFetchRequest(entityName:"Book")
@@ -271,7 +278,7 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
                 let randomSize = 1 + Int(arc4random_uniform(UInt32(6)))
                 randomBook.comment = randomWordPhraseOfLength(randomSize)
                 try backgroundMoc1.save()
-                print("updateRandomBookInBackground book: \(randomBook.title)")
+                //print("updateRandomBookInBackground book: \(randomBook.title)")
             }
         }
         catch let error as NSError {
@@ -280,7 +287,7 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
         ++logTimerEvents
     }
     private func deleteRandomBookInBackground() {
-        print(__FUNCTION__)
+        //print(__FUNCTION__)
         let backgroundMoc2 = coreDataSafe.temporaryBackgroundMOC(name:"T-BackgroundDelete")
         
         let fetchRequest2 = NSFetchRequest(entityName:"Book")
@@ -292,14 +299,14 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
             let randomBook = books[randomIndex]
             backgroundMoc2.deleteObject(randomBook)
             try backgroundMoc2.save()
-            print("book[\(randomIndex)] deleted")
+            //print("book[\(randomIndex)] deleted")
         }
         catch let error as NSError {
             print("runBookUpdates error: \(error), \(error.userInfo)")
         }
     }
     private func addRandomBookInBackground() {
-        print(__FUNCTION__)
+        //print(__FUNCTION__)
         let backgroundMoc2 = coreDataSafe.temporaryBackgroundMOC(name:"T-BackgroundAdd")
         
         let fetchRequest2 = NSFetchRequest(entityName:"Author")
@@ -317,7 +324,7 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
             book.author = randomAuthor
             book.pageCount = NSNumber(unsignedInt: 100 + arc4random_uniform(UInt32(500)))
             try backgroundMoc2.save()
-            print("book[\(book.title)] added for \(randomAuthor.name)")
+            //print("book[\(book.title)] added for \(randomAuthor.name)")
         }
         catch let error as NSError {
             print("addRandomBookInBackground error: \(error), \(error.userInfo)")
@@ -402,7 +409,13 @@ extension ViewController {
         return phrase
     }
 }
-
+extension ViewController : UIPopoverPresentationControllerDelegate {
+    func adaptivePresentationStyleForPresentationController(controller: UIPresentationController) -> UIModalPresentationStyle {
+        return UIModalPresentationStyle.None
+    }
+    func popoverPresentationControllerDidDismissPopover(popoverPresentationController: UIPopoverPresentationController) {
+    }
+}
 
 
 

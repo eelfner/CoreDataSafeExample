@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		B652ACA01C6B98B400596F00 /* InfoViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = B652AC9F1C6B98B400596F00 /* InfoViewController.swift */; };
 		B6BBC6171C5E4C590068CC17 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = B6BBC6161C5E4C590068CC17 /* AppDelegate.swift */; };
 		B6BBC6191C5E4C590068CC17 /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = B6BBC6181C5E4C590068CC17 /* ViewController.swift */; };
 		B6BBC61C1C5E4C590068CC17 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = B6BBC61A1C5E4C590068CC17 /* Main.storyboard */; };
@@ -34,6 +35,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		B652AC9F1C6B98B400596F00 /* InfoViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = InfoViewController.swift; sourceTree = "<group>"; };
 		B6BBC6131C5E4C590068CC17 /* CoreDataSafeExample.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = CoreDataSafeExample.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		B6BBC6161C5E4C590068CC17 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		B6BBC6181C5E4C590068CC17 /* ViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewController.swift; sourceTree = "<group>"; };
@@ -102,6 +104,7 @@
 				B6BBC61D1C5E4C590068CC17 /* Assets.xcassets */,
 				B6BBC61F1C5E4C590068CC17 /* LaunchScreen.storyboard */,
 				B6BBC6221C5E4C590068CC17 /* Info.plist */,
+				B652AC9F1C6B98B400596F00 /* InfoViewController.swift */,
 			);
 			path = CoreDataSafeExample;
 			sourceTree = "<group>";
@@ -235,6 +238,7 @@
 				B6BBC6191C5E4C590068CC17 /* ViewController.swift in Sources */,
 				B6BBC64F1C5FA68C0068CC17 /* Book.swift in Sources */,
 				B6BBC64E1C5FA68C0068CC17 /* Book+CoreDataProperties.swift in Sources */,
+				B652ACA01C6B98B400596F00 /* InfoViewController.swift in Sources */,
 				B6BBC62B1C5E534D0068CC17 /* Books.xcdatamodeld in Sources */,
 				B6BBC6171C5E4C590068CC17 /* AppDelegate.swift in Sources */,
 				B6BBC64D1C5FA68C0068CC17 /* Author.swift in Sources */,
