@@ -185,7 +185,7 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
     
     //Runs continuously - A curious path led me to this implementation. NSTimers need a run loop which is usually the
     //  main run loop. The timers were calling a selector (@objc func) here, but that would interfer with 
-    //  NSOperationQueue.waitUntilAllOperationsAreFinished() also running on the main threa
+    //  NSOperationQueue.waitUntilAllOperationsAreFinished() also running on the main thread.
     private func runBackgroundDaemon() {
         let backGroundQueue = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0)
         dispatch_async(backGroundQueue) {
