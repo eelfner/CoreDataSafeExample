@@ -41,19 +41,7 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
         
         logTimer = NSTimer.scheduledTimerWithTimeInterval(1.0, target: self, selector: "logTimerAction", userInfo: nil, repeats: true)
         
-//        // The standard for CoreData is that for performance reasons, background context updates that are propagated to the mainContext do _not_ result in object faults. The code here, now with NSFetchedResultsControllerDelegate, does pick up those changes so the UI can be updated. Therefore, we do not need this observer.
-//        NSNotificationCenter.defaultCenter().addObserverForName(NSManagedObjectContextObjectsDidChangeNotification, object: nil, queue: nil) { notification in
-//            if self.operationUpdateUI {
-//                if let sourceContext = notification.object as? NSManagedObjectContext {
-//                    if sourceContext == self.coreDataSafe.mainMoc {
-//                        self.tableView.reloadData()
-//                    }
-//                }
-//            }
-//        }
-
-        try! fetchedResultsController.performFetch()
-        
+        resetAction()
         self.runBackgroundDaemon()
     }
 
@@ -270,15 +258,16 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
         do {
             let results =  try backgroundMoc1.executeFetchRequest(fetchRequest1)
             let books = results as! [Book]
-            
-            let randomIndex = Int(arc4random_uniform(UInt32(books.count)))
-            if randomIndex < books.count {
-                let randomBook = books[randomIndex]
-                
-                let randomSize = 1 + Int(arc4random_uniform(UInt32(6)))
-                randomBook.comment = randomWordPhraseOfLength(randomSize)
-                try backgroundMoc1.save()
-                //print("updateRandomBookInBackground book: \(randomBook.title)")
+            if books.count > 0 {
+                let randomIndex = Int(arc4random_uniform(UInt32(books.count)))
+                if randomIndex < books.count {
+                    let randomBook = books[randomIndex]
+                    
+                    let randomSize = 1 + Int(arc4random_uniform(UInt32(6)))
+                    randomBook.comment = randomWordPhraseOfLength(randomSize)
+                    try backgroundMoc1.save()
+                    //print("updateRandomBookInBackground book: \(randomBook.title)")
+                }
             }
         }
         catch let error as NSError {
@@ -294,12 +283,13 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
         do {
             let results =  try backgroundMoc2.executeFetchRequest(fetchRequest2)
             let books = results as! [Book]
-            
-            let randomIndex = Int(arc4random_uniform(UInt32(books.count)))
-            let randomBook = books[randomIndex]
-            backgroundMoc2.deleteObject(randomBook)
-            try backgroundMoc2.save()
-            //print("book[\(randomIndex)] deleted")
+            if books.count > 0 {
+                let randomIndex = Int(arc4random_uniform(UInt32(books.count)))
+                let randomBook = books[randomIndex]
+                backgroundMoc2.deleteObject(randomBook)
+                try backgroundMoc2.save()
+                //print("book[\(randomIndex)] deleted")
+            }
         }
         catch let error as NSError {
             print("runBookUpdates error: \(error), \(error.userInfo)")
@@ -314,17 +304,19 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
             let results =  try backgroundMoc2.executeFetchRequest(fetchRequest2)
             let authors = results as! [Author]
             
-            let randomIndex = Int(arc4random_uniform(UInt32(authors.count)))
-            let randomAuthor = authors[randomIndex]
-            
-            let titleWordCount = 2 + Int(arc4random_uniform(UInt32(4)))
-            let book:Book = coreDataSafe.createEntity(backgroundMoc2)
-            book.title = randomWordPhraseOfLength(titleWordCount).capitalizedString
-            book.comment = randomWordPhraseOfLength(6 + titleWordCount)
-            book.author = randomAuthor
-            book.pageCount = NSNumber(unsignedInt: 100 + arc4random_uniform(UInt32(500)))
-            try backgroundMoc2.save()
-            //print("book[\(book.title)] added for \(randomAuthor.name)")
+            if authors.count > 0 {
+                let randomIndex = Int(arc4random_uniform(UInt32(authors.count)))
+                let randomAuthor = authors[randomIndex]
+                
+                let titleWordCount = 2 + Int(arc4random_uniform(UInt32(4)))
+                let book:Book = coreDataSafe.createEntity(backgroundMoc2)
+                book.title = randomWordPhraseOfLength(titleWordCount).capitalizedString
+                book.comment = randomWordPhraseOfLength(6 + titleWordCount)
+                book.author = randomAuthor
+                book.pageCount = NSNumber(unsignedInt: 100 + arc4random_uniform(UInt32(500)))
+                try backgroundMoc2.save()
+                //print("book[\(book.title)] added for \(randomAuthor.name)")
+            }
         }
         catch let error as NSError {
             print("addRandomBookInBackground error: \(error), \(error.userInfo)")
