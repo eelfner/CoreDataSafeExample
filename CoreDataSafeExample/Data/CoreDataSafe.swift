@@ -67,7 +67,9 @@ dispatch_async(backGroundQueue) {
 // Notes:
 //  - Needs testing and work on migrations.
 //  - Failed migrations can result in: "autolayout engine from a background thread" errors because ???
-//
+//  - MZ suggests error handling is over the top. The globalErrorHandler was added to be able allow the trapping of unforeseen untested errors rather than just swallowing them or crashing.
+//  - MZ also points out that the dispatch_async(dispatch_get_main_queue()) is unnecessary in saveMainMocAsync as the save operation will be carried out in the thread that created the context which is the main thread. I would remove, but since the error handlers are still there, I want to be ensured that they will be called on the main thread, so I have left it for now.
+
 import Foundation
 import CoreData
 
