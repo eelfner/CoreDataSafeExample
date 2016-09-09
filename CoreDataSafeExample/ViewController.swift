@@ -39,7 +39,7 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
         super.viewDidLoad()
         // Do any additional setup after loading the view, typically from a nib.
         
-        logTimer = NSTimer.scheduledTimerWithTimeInterval(1.0, target: self, selector: "logTimerAction", userInfo: nil, repeats: true)
+        logTimer = NSTimer.scheduledTimerWithTimeInterval(1.0, target: self, selector: #selector(logTimerAction), userInfo: nil, repeats: true)
         
         resetAction()
         self.runBackgroundDaemon()
@@ -273,7 +273,7 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
         catch let error as NSError {
             print("updateRandomBookInBackground error: \(error), \(error.userInfo)")
         }
-        ++logTimerEvents
+        logTimerEvents += 1
     }
     private func deleteRandomBookInBackground() {
         //print(__FUNCTION__)
