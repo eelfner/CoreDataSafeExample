@@ -7,6 +7,8 @@ This project contains a few different things, but the key class is CoreDataSafe.
  1. The CoreDataTest target that demonstrates some usage and validates the operation of the stack.
  2. The iOS App that uses the CoreDataSafe to populate a TableView using an NSFectchResultsController while running background processes to update the data.
 
+[Overview PDF](./CoreDataSafeExampleOverview.pdf)
+
 ![Demo GIF](./CoreDataSafe4s.gif)
 
 Other Features and Notes:
