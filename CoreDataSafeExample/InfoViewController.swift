@@ -19,9 +19,9 @@ class InfoViewController: UIViewController {
         super.viewDidLoad()
         
         // Do any additional setup after loading the view.
-        preferredContentSize = CGSizeMake(300, 300)
+        preferredContentSize = CGSize(width: 300, height: 300)
     }
-    @IBAction func exitAction(sender: AnyObject) {
-        presentingViewController?.dismissViewControllerAnimated(true, completion: nil)
+    @IBAction func exitAction(_ sender: AnyObject) {
+        presentingViewController?.dismiss(animated: true, completion: nil)
     }
 }

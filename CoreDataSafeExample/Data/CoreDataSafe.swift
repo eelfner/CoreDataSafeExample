@@ -78,99 +78,97 @@ public class CoreDataSafe {
     private(set) public var mainMoc: NSManagedObjectContext
     private let privateMoc: NSManagedObjectContext
     private let storeFileURL: NSURL
-    private var globalErrorHandler:((error:NSError, msg:String)-> ())? = nil
+    private var globalErrorHandler:((Error, String)-> ())? = nil
     
-    init(dbName:String, bundle:NSBundle = NSBundle.mainBundle(), errorHandler:((error:NSError, msg:String) -> ())? = nil, completion:(() -> ())? = nil) {
+    init(dbName:String, bundle:Bundle = Bundle.main, errorHandler:((Error, String) -> Void)? = nil, completion:(() -> Void)? = nil) {
     
         globalErrorHandler = errorHandler // Save global handler if there is one
         
-        let modelURL = bundle.URLForResource(dbName, withExtension:"momd")
+        let modelURL = bundle.url(forResource: dbName, withExtension:"momd")
         assert(modelURL != nil, "CoreDataMgr failed to find CoreData model: [\(dbName).momd].")
 
-        let mom = NSManagedObjectModel(contentsOfURL:modelURL!)
+        let mom = NSManagedObjectModel(contentsOf: modelURL!)
         assert(mom != nil, "CoreDataMgr init failed for: \(modelURL). Check for correct model file name.")
         
         let psc = NSPersistentStoreCoordinator(managedObjectModel:mom!)
         
-        privateMoc = NSManagedObjectContext(concurrencyType:.PrivateQueueConcurrencyType)
+        privateMoc = NSManagedObjectContext(concurrencyType:.privateQueueConcurrencyType)
         privateMoc.persistentStoreCoordinator = psc
         
-        let mainMoc = MainManagedObjectContext(concurrencyType:.MainQueueConcurrencyType)
+        let mainMoc = MainManagedObjectContext(concurrencyType:.mainQueueConcurrencyType)
         mainMoc.globalErrorHandler = globalErrorHandler // Share handler for background errors
         
         // Override default (NSErrorMergePolicy) policy. Last in (by field) wins. There may be cases where this is not acceptable and error handling logic is needed to handle merge errors.
-        mainMoc.mergePolicy = NSMergePolicy(mergeType:.MergeByPropertyObjectTrumpMergePolicyType)
-        mainMoc.parentContext = self.privateMoc // Saves flow up to parent
+        mainMoc.mergePolicy = NSMergePolicy(merge:.mergeByPropertyObjectTrumpMergePolicyType)
+        mainMoc.parent = self.privateMoc // Saves flow up to parent
         self.mainMoc = mainMoc
         
-        let docDir = NSFileManager.defaultManager().URLsForDirectory(.DocumentDirectory, inDomains:.UserDomainMask).first
-        storeFileURL = NSURL(string: "\(dbName).sqlite", relativeToURL: docDir)!
+        let docDir = FileManager.default.urls(for: .documentDirectory, in:.userDomainMask).first
+        storeFileURL = NSURL(string: "\(dbName).sqlite", relativeTo: docDir)!
         
         // Create SQLite store in background and call completion
-        let backGroundQueue = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0)
-        dispatch_async(backGroundQueue) {
+        DispatchQueue.global(qos: .background).async {
             do  {
                 let lightweightMigration = [NSMigratePersistentStoresAutomaticallyOption:true, NSInferMappingModelAutomaticallyOption:true]
-                try psc.addPersistentStoreWithType(NSSQLiteStoreType, configuration:nil, URL:self.storeFileURL, options:lightweightMigration)
+                try psc.addPersistentStore(ofType: NSSQLiteStoreType, configurationName:nil, at:self.storeFileURL as URL, options:lightweightMigration)
                 if completion != nil {
-                    dispatch_async(dispatch_get_main_queue()) {
+                    DispatchQueue.main.async {
                         completion!()
                     }
                 }
             }
-            catch let error as NSError {
+            catch {
                 let msg = "CoreDataSafe.init:addPersistentStoreWithType() for [\(self.storeFileURL)] failed with error: [\(error)]"
                 if let errorHandler = self.globalErrorHandler {
-                    errorHandler(error:error, msg:msg)
+                    errorHandler(error, msg)
                 }
                 else {
                     print(msg)
                     fatalError(msg)
                 }
             }
-            catch {
-                fatalError("CoreDataSafe.init:addPersistentStoreWithType failure unknown type")
-            }
         }
     }
     func createEntity<T:NSManagedObject>(inContext:NSManagedObjectContext? = nil) -> T {
         
         let typeName = "\(T.self)"
-        guard let entityDescription = NSEntityDescription.entityForName(typeName, inManagedObjectContext:mainMoc) else {
+        guard let entityDescription = NSEntityDescription.entity(forEntityName: typeName, in:mainMoc) else {
             fatalError("NSManagedObject named \(typeName) doesn't exist.")
         }
         let moc = inContext ?? mainMoc
-        let any = NSManagedObject(entity:entityDescription, insertIntoManagedObjectContext:moc)
+        let any = NSManagedObject(entity:entityDescription, insertInto:moc)
         
         return any as! T
     }
-    public func temporaryBackgroundMOC(name name:String) -> NSManagedObjectContext {
-        
-        let moc = TemporaryBackgroundManagedObjectContext(concurrencyType:.PrivateQueueConcurrencyType)
-        moc.mergePolicy = NSMergePolicy(mergeType:.MergeByPropertyObjectTrumpMergePolicyType)
-        moc.parentContext = mainMoc
+    public func temporaryBackgroundMOC(name:String) -> NSManagedObjectContext {
+        let moc = TemporaryBackgroundManagedObjectContext(concurrencyType:.privateQueueConcurrencyType)
+        moc.mergePolicy = NSMergePolicy(merge:.mergeByPropertyObjectTrumpMergePolicyType)
+        moc.parent = mainMoc
         moc.name = name
         
         return moc
     }
     // Convenience method. Async execution with optional errorHandler callback.
     // Could add completion handler, but maybe user should then just use coreDataSave.mainMoc.save()
-    public func saveMainMocAsync(errorHandler:((error:NSError) -> Void)? = nil) {
-        dispatch_async(dispatch_get_main_queue()) {
+    public func saveMainMocAsync(errorHandler:((Error) -> Void)? = nil) {
+        DispatchQueue.main.async {
             do {
                 try self.mainMoc.save()
             }
-            catch let error as NSError {
-                let errorMsg = "CoreDataSafe.mainMoc.save() failed with error: [\(error)]"
-                if errorHandler != nil {
-                    errorHandler!(error: error)
-                }
-                else if let handler = self.globalErrorHandler {
-                    handler(error:error, msg:errorMsg)
+            catch {
+                if let errorHandler = errorHandler {
+                    errorHandler(error)
                 }
                 else {
-                    print(errorMsg)
-                    assertionFailure(errorMsg)
+                    let errorMsg = "CoreDataSafe.mainMoc.save() failed with error: [\(error)]"
+                    
+                    if let globalHandler = self.globalErrorHandler {
+                        globalHandler(error, errorMsg)
+                    }
+                    else {
+                        print(errorMsg)
+                        assertionFailure(errorMsg)
+                    }
                 }
             }
         }
@@ -180,20 +178,20 @@ public class CoreDataSafe {
     // but the propogation to the persistent store requires a save call on the privateMoc.
     private class MainManagedObjectContext : NSManagedObjectContext {
         
-        private var globalErrorHandler:((error:NSError, msg:String)-> ())? = nil
+        fileprivate var globalErrorHandler:((Error, String) -> Void)? = nil
         
         override func save() throws {
             try super.save()
             
-            if let privateMoc = parentContext {
-                privateMoc.performBlock() { // Note: async
+            if let privateMoc = parent {
+                privateMoc.perform() { // Note: async
                     do {
                         try privateMoc.save()
                     }
                     catch let error as NSError {
                         let errorMsg = "CoreDataSafe.privateMoc.save() failed with error: [\(error)]"
                         if let handler = self.globalErrorHandler {
-                            handler(error:error, msg:errorMsg)
+                            handler(error, errorMsg)
                         }
                         else {
                             print(errorMsg)
@@ -207,15 +205,15 @@ public class CoreDataSafe {
     // Propogate save through to the main context.
     private class TemporaryBackgroundManagedObjectContext : NSManagedObjectContext {
         override func save() throws {
-            assert(self.concurrencyType == .PrivateQueueConcurrencyType, "Sanity check on TemporaryBackgroundManagedObjectContext")
-            assert(self.parentContext is MainManagedObjectContext, "Sanity check on TemporaryBackgroundManagedObjectContext")
+            assert(self.concurrencyType == .privateQueueConcurrencyType, "Sanity check on TemporaryBackgroundManagedObjectContext")
+            assert(self.parent is MainManagedObjectContext, "Sanity check on TemporaryBackgroundManagedObjectContext")
             
             try super.save() // Saves to MainMoc
-            if let mainMoc = parentContext as? MainManagedObjectContext {
+            if let mainMoc = parent as? MainManagedObjectContext {
                 
                 var blockError:NSError? = nil // Must capture error within block and pass out.
                 
-                mainMoc.performBlockAndWait() {
+                mainMoc.performAndWait() {
                     do {
                         try mainMoc.save()
                     }

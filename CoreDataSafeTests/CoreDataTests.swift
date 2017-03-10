@@ -18,13 +18,13 @@ class CoreDataTests: XCTestCase
     {
         super.setUp()
 
-        let expectation = expectationWithDescription("setupSuccess")
-        let testBundle = NSBundle(forClass: CoreDataTests.self)
+        let expectation = self.expectation(description: "setupSuccess")
+        let testBundle = Bundle(for: CoreDataTests.self)
         coreDataMgr = CoreDataSafe(dbName:"TestModel", bundle:testBundle) {_ in
              self.deleteAllBooks() { _ in expectation.fulfill() }
         }
         
-        waitForExpectationsWithTimeout(10, handler: nil)
+        waitForExpectations(timeout: 10, handler: nil)
 }
     
     override func tearDown() {
@@ -32,14 +32,14 @@ class CoreDataTests: XCTestCase
         super.tearDown()
     }
     func testCRUDOnMain() {
-        let expectionCreate = expectationWithDescription("created")
-        let expectionRead = expectationWithDescription("read")
-        let expectionUpdate = expectationWithDescription("updated")
-        let expectionDelete = expectationWithDescription("deleted")
+        let expectionCreate = expectation(description: "created")
+        let expectionRead = expectation(description: "read")
+        let expectionUpdate = expectation(description: "updated")
+        let expectionDelete = expectation(description: "deleted")
         
         // Create
         let book:Book = coreDataMgr.createEntity()
-        let time = NSDate().timeIntervalSince1970
+        let time = Date().timeIntervalSince1970
         let title = "Title at \(time)"
         book.title = title
         XCTAssertNotNil(book)
@@ -47,11 +47,11 @@ class CoreDataTests: XCTestCase
         expectionCreate.fulfill()
 
         // Read
-        let fetchRequest1 = NSFetchRequest(entityName:"Book")
+        let fetchRequest1 = NSFetchRequest<NSFetchRequestResult>(entityName:"Book")
         let titleSearchPredicate1 = NSPredicate(format:"title=%@", title)
         fetchRequest1.predicate = titleSearchPredicate1
 
-        let results1 =  try! coreDataMgr.mainMoc.executeFetchRequest(fetchRequest1)
+        let results1 =  try! coreDataMgr.mainMoc.fetch(fetchRequest1)
         XCTAssert(results1.count == 1)
         let bookRead = (results1 as! [Book])[0]
         if bookRead.title == title { expectionRead.fulfill() }
@@ -61,24 +61,24 @@ class CoreDataTests: XCTestCase
         bookRead.title = title2
         try! coreDataMgr.mainMoc.save()
         
-        let fetchRequest2 = NSFetchRequest(entityName:"Book")
+        let fetchRequest2 = NSFetchRequest<NSFetchRequestResult>(entityName:"Book")
         let titleSearchPredicate2 = NSPredicate(format:"title=%@", title2)
         fetchRequest2.predicate = titleSearchPredicate2
         
-        let results2 =  try! coreDataMgr.mainMoc.executeFetchRequest(fetchRequest2)
+        let results2 =  try! coreDataMgr.mainMoc.fetch(fetchRequest2)
         XCTAssert(results2.count == 1)
         let bookRead2 = (results2 as! [Book])[0]
         if bookRead2.title == title2 { expectionUpdate.fulfill() }
         
         // Delete
-        coreDataMgr.mainMoc.deleteObject(bookRead2)
+        coreDataMgr.mainMoc.delete(bookRead2)
         try! coreDataMgr.mainMoc.save()
         
-        let results3 =  try! coreDataMgr.mainMoc.executeFetchRequest(fetchRequest2)
+        let results3 =  try! coreDataMgr.mainMoc.fetch(fetchRequest2)
         XCTAssert(results3.count == 0)
         expectionDelete.fulfill()
         
-        waitForExpectationsWithTimeout(0, handler: nil) // Should all be synchronous
+        waitForExpectations(timeout: 0, handler: nil) // Should all be synchronous
     }
 
     func testHammerCoreDataFromBackground() {
@@ -97,31 +97,31 @@ class CoreDataTests: XCTestCase
         print("Created [\(MAX_BOOKS)] books.")
         
         var delayNsec = 0
-        let backGroundQueue = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0)
+        let backGroundQueue = DispatchQueue.global(qos: .background)
         for j in 0 ..< MAX_THREADS {
-            let expectation = expectationWithDescription("runBookUpdates\(j)Completed")
+            let expectation = self.expectation(description: "runBookUpdates\(j)Completed")
             delayNsec += Int(arc4random_uniform(UInt32(1_000_000))) // If you make this 100,000,000 you'll see many more updates.
-            let delayTime = dispatch_time(DISPATCH_TIME_NOW, Int64(delayNsec))
-            dispatch_after(delayTime, backGroundQueue) {
+            let delayTime = DispatchTime.now() + Double(Int64(delayNsec)) / Double(NSEC_PER_SEC)
+            backGroundQueue.asyncAfter(deadline: delayTime) {
                 self.runBookUpdates(j, maxOps:MAX_OPS)
                 expectation.fulfill()
                 print("\(expectation)")
             }
         }
         print("Started [\(MAX_THREADS)] update threads.")
-        waitForExpectationsWithTimeout(10, handler: nil)
+        waitForExpectations(timeout: TimeInterval(max(10, MAX_THREADS * MAX_OPS / 100)) , handler: nil)
         let updates = showBooks()
         let maxUpdates = MAX_THREADS * MAX_OPS
         let missedUpdates = maxUpdates - updates
         print("Missed updates: \(missedUpdates)/\(maxUpdates)")
     }
-    private func runBookUpdates(threadId:Int, maxOps:Int) {
+    fileprivate func runBookUpdates(_ threadId:Int, maxOps:Int) {
         
         let moc = coreDataMgr.temporaryBackgroundMOC(name:"T\(threadId)")
         
-        let fetchRequest = NSFetchRequest(entityName:"Book")
+        let fetchRequest = NSFetchRequest<NSFetchRequestResult>(entityName:"Book")
         do {
-            let results =  try moc.executeFetchRequest(fetchRequest)
+            let results =  try moc.fetch(fetchRequest)
             let books = results as! [Book]
             for _ in 1...maxOps {
                 let randInt = Int(arc4random_uniform(UInt32(books.count)))
@@ -144,15 +144,15 @@ class CoreDataTests: XCTestCase
     func testBackgroundUpdateAndDelete() {
         let kNanoSecsPerMillisec = Int64(1_000_000)
         
-        let expectionCreate = expectationWithDescription("created")
+        let expectionCreate = expectation(description: "created")
         // Note: update and delete expectations are created as optional so they can be removed after first encountered.
-        var expectionUpdatePropogated:XCTestExpectation? = expectationWithDescription("expectionUpdatePropogated")
-        var expectionDeletePropogated:XCTestExpectation? = expectationWithDescription("expectionDeletePropogated")
-        let expectionCheckedAll = expectationWithDescription("expectionCheckedAll")
+        var expectionUpdatePropogated:XCTestExpectation? = expectation(description: "expectionUpdatePropogated")
+        var expectionDeletePropogated:XCTestExpectation? = expectation(description: "expectionDeletePropogated")
+        let expectionCheckedAll = expectation(description: "expectionCheckedAll")
         
         // Create
         let book:Book = coreDataMgr.createEntity()
-        let time = NSDate().timeIntervalSince1970
+        let time = Date().timeIntervalSince1970
         let title = "Title at \(time)"
         book.title = title
         XCTAssertNotNil(book)
@@ -161,17 +161,17 @@ class CoreDataTests: XCTestCase
         
         // Setup intervals
         let delayMsecs:[Int64] = [0, 10, 1_000, 2_000, 3_000]
-        let delayTimes = delayMsecs.map() { dispatch_time(DISPATCH_TIME_NOW, Int64($0 * kNanoSecsPerMillisec)) }
+        let delayTimes = delayMsecs.map() { DispatchTime.now() + Double(Int64($0 * kNanoSecsPerMillisec)) / Double(NSEC_PER_SEC) }
         
         // Read at intervals
-        let backGroundQueue = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0)
-        dispatch_async(backGroundQueue) {
+        let backGroundQueue = DispatchQueue.global(qos: .background)
+        backGroundQueue.async {
             for delayTime in delayTimes {
-                dispatch_after(delayTime, dispatch_get_main_queue()) {
+                DispatchQueue.main.asyncAfter(deadline: delayTime) {
                     print("Delay:\(delayTime)ns - Book: \(book.title ?? "nil") hasMoc: \(book.managedObjectContext != nil)")
                     
                     // Check test expectations
-                    if ((book.title?.containsString("updated")) != nil) { expectionUpdatePropogated?.fulfill(); expectionUpdatePropogated = nil }
+                    if ((book.title?.contains("updated")) != nil) { expectionUpdatePropogated?.fulfill(); expectionUpdatePropogated = nil }
                     if (book.managedObjectContext == nil)          { expectionDeletePropogated?.fulfill(); expectionDeletePropogated = nil }
                     if delayTime == delayTimes.last                { expectionCheckedAll.fulfill() }
                 }
@@ -179,26 +179,26 @@ class CoreDataTests: XCTestCase
         }
         
         // Update in background
-        let timeAfter1 = dispatch_time(delayTimes[1], Int64(1 * kNanoSecsPerMillisec))
-        dispatch_after(timeAfter1, dispatch_get_main_queue()) {
+        let timeAfter1 = delayTimes[1] + Double(Int64(1 * kNanoSecsPerMillisec)) / Double(NSEC_PER_SEC)
+        DispatchQueue.main.asyncAfter(deadline: timeAfter1) {
             self.updateRandomBookInBackground()
         }
         
         // Delete in background
-        let timeAfter2 = dispatch_time(delayTimes[2], Int64(1 * kNanoSecsPerMillisec))
-        dispatch_after(timeAfter2, dispatch_get_main_queue()) {
+        let timeAfter2 = delayTimes[2] + Double(Int64(1 * kNanoSecsPerMillisec)) / Double(NSEC_PER_SEC)
+        DispatchQueue.main.asyncAfter(deadline: timeAfter2) {
             self.deleteRandomBookInBackground()
         }
 
-        waitForExpectationsWithTimeout(5, handler: nil) // Should all be synchronous
+        waitForExpectations(timeout: 5, handler: nil) // Should all be synchronous
     }
 
-    private func updateRandomBookInBackground() {
+    fileprivate func updateRandomBookInBackground() {
         let backgroundMoc1 = coreDataMgr.temporaryBackgroundMOC(name:"T-BackgroundUpdate")
         
-        let fetchRequest1 = NSFetchRequest(entityName:"Book")
+        let fetchRequest1 = NSFetchRequest<NSFetchRequestResult>(entityName:"Book")
         do {
-            let results =  try backgroundMoc1.executeFetchRequest(fetchRequest1)
+            let results =  try backgroundMoc1.fetch(fetchRequest1)
             let books = results as! [Book]
             
             let randomIndex = Int(arc4random_uniform(UInt32(books.count)))
@@ -212,17 +212,17 @@ class CoreDataTests: XCTestCase
         }
 
     }
-    private func deleteRandomBookInBackground() {
+    fileprivate func deleteRandomBookInBackground() {
         let backgroundMoc2 = coreDataMgr.temporaryBackgroundMOC(name:"T-BackgroundDelete")
         
-        let fetchRequest2 = NSFetchRequest(entityName:"Book")
+        let fetchRequest2 = NSFetchRequest<NSFetchRequestResult>(entityName:"Book")
         do {
-            let results =  try backgroundMoc2.executeFetchRequest(fetchRequest2)
+            let results =  try backgroundMoc2.fetch(fetchRequest2)
             let books = results as! [Book]
             
             let randomIndex = Int(arc4random_uniform(UInt32(books.count)))
             let randomBook = books[randomIndex]
-            backgroundMoc2.deleteObject(randomBook)
+            backgroundMoc2.delete(randomBook)
             try backgroundMoc2.save()
             print("book[\(randomIndex)] deleted")
         }
@@ -232,12 +232,12 @@ class CoreDataTests: XCTestCase
         
     }
     // MARK: Helper methods
-    private func showBooks() -> Int {
+    fileprivate func showBooks() -> Int {
         var charCount = 0
-        let fetchRequest = NSFetchRequest(entityName:"Book")
+        let fetchRequest = NSFetchRequest<NSFetchRequestResult>(entityName:"Book")
         fetchRequest.sortDescriptors = [NSSortDescriptor(key:"title", ascending:true)]
         do {
-            let results =  try coreDataMgr.mainMoc.executeFetchRequest(fetchRequest)
+            let results =  try coreDataMgr.mainMoc.fetch(fetchRequest)
             let books = results as! [Book]
             for book in books {
                 print(book.title!)
@@ -251,22 +251,22 @@ class CoreDataTests: XCTestCase
             return 0
         }
     }
-    private func deleteAllBooks(completion:(bSuccess:Bool) -> Void) {
-        let fetchRequest = NSFetchRequest(entityName:"Book")
+    fileprivate func deleteAllBooks(_ completion:(_ bSuccess:Bool) -> Void) {
+        let fetchRequest = NSFetchRequest<NSFetchRequestResult>(entityName:"Book")
         do {
             let backgroundMoc = coreDataMgr.temporaryBackgroundMOC(name: "DeleteBooks")
-            let results =  try backgroundMoc.executeFetchRequest(fetchRequest)
+            let results =  try backgroundMoc.fetch(fetchRequest)
             let books = results as! [Book]
             for book in books {
-                backgroundMoc.deleteObject(book)
+                backgroundMoc.delete(book)
             }
             try backgroundMoc.save()
             print("Deleted [\(books.count)] books.")
-            completion(bSuccess: true)
+            completion(true)
         }
         catch let error as NSError {
             print("deleteAll error: \(error), \(error.userInfo)")
-            completion(bSuccess: false)
+            completion(false)
         }
     }
 //    func testPerformanceExample() {

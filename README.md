@@ -1,6 +1,7 @@
 ## CoreDataSafe 
 
-Built with xcode 7.2.1 for iOS9. CoreDataSafe should apply to OS X as well, but not tested here.
+Updated from Xcode 8.2.1, Swift 3, for iOS9+.
+CoreDataSafe should apply to OS X as well, but not tested here.
 
 This project contains a few different things, but the key class is CoreDataSafe. This is a simple CoreData stack (<200 lines of code) that enables effective and (almost) foolproof code to implement CoreData with both foreground and background operations. The rest of the project is just a demonstration of using it. The demo consists of 2 parts:
 
