@@ -47,13 +47,13 @@ class CoreDataTests: XCTestCase
         expectionCreate.fulfill()
 
         // Read
-        let fetchRequest1 = NSFetchRequest<NSFetchRequestResult>(entityName:"Book")
+        let fetchRequest1 = NSFetchRequest<Book>(entityName:"Book")
         let titleSearchPredicate1 = NSPredicate(format:"title=%@", title)
         fetchRequest1.predicate = titleSearchPredicate1
 
         let results1 =  try! coreDataMgr.mainMoc.fetch(fetchRequest1)
         XCTAssert(results1.count == 1)
-        let bookRead = (results1 as! [Book])[0]
+        let bookRead = results1[0]
         if bookRead.title == title { expectionRead.fulfill() }
 
         // Update
@@ -61,13 +61,13 @@ class CoreDataTests: XCTestCase
         bookRead.title = title2
         try! coreDataMgr.mainMoc.save()
         
-        let fetchRequest2 = NSFetchRequest<NSFetchRequestResult>(entityName:"Book")
+        let fetchRequest2 = NSFetchRequest<Book>(entityName:"Book")
         let titleSearchPredicate2 = NSPredicate(format:"title=%@", title2)
         fetchRequest2.predicate = titleSearchPredicate2
         
         let results2 =  try! coreDataMgr.mainMoc.fetch(fetchRequest2)
         XCTAssert(results2.count == 1)
-        let bookRead2 = (results2 as! [Book])[0]
+        let bookRead2 = results2[0]
         if bookRead2.title == title2 { expectionUpdate.fulfill() }
         
         // Delete
@@ -119,10 +119,9 @@ class CoreDataTests: XCTestCase
         
         let moc = coreDataMgr.temporaryBackgroundMOC(name:"T\(threadId)")
         
-        let fetchRequest = NSFetchRequest<NSFetchRequestResult>(entityName:"Book")
+        let fetchRequest = NSFetchRequest<Book>(entityName:"Book")
         do {
-            let results =  try moc.fetch(fetchRequest)
-            let books = results as! [Book]
+            let books =  try moc.fetch(fetchRequest)
             for _ in 1...maxOps {
                 let randInt = Int(arc4random_uniform(UInt32(books.count)))
                 let randomBook = books[randInt]
@@ -196,11 +195,9 @@ class CoreDataTests: XCTestCase
     fileprivate func updateRandomBookInBackground() {
         let backgroundMoc1 = coreDataMgr.temporaryBackgroundMOC(name:"T-BackgroundUpdate")
         
-        let fetchRequest1 = NSFetchRequest<NSFetchRequestResult>(entityName:"Book")
+        let fetchRequest1 = NSFetchRequest<Book>(entityName:"Book")
         do {
-            let results =  try backgroundMoc1.fetch(fetchRequest1)
-            let books = results as! [Book]
-            
+            let books =  try backgroundMoc1.fetch(fetchRequest1)
             let randomIndex = Int(arc4random_uniform(UInt32(books.count)))
             let randomBook = books[randomIndex]
             randomBook.title = (randomBook.title ?? "") + "-Updated"
@@ -215,11 +212,9 @@ class CoreDataTests: XCTestCase
     fileprivate func deleteRandomBookInBackground() {
         let backgroundMoc2 = coreDataMgr.temporaryBackgroundMOC(name:"T-BackgroundDelete")
         
-        let fetchRequest2 = NSFetchRequest<NSFetchRequestResult>(entityName:"Book")
+        let fetchRequest2 = NSFetchRequest<Book>(entityName:"Book")
         do {
-            let results =  try backgroundMoc2.fetch(fetchRequest2)
-            let books = results as! [Book]
-            
+            let books =  try backgroundMoc2.fetch(fetchRequest2)
             let randomIndex = Int(arc4random_uniform(UInt32(books.count)))
             let randomBook = books[randomIndex]
             backgroundMoc2.delete(randomBook)
@@ -234,11 +229,10 @@ class CoreDataTests: XCTestCase
     // MARK: Helper methods
     fileprivate func showBooks() -> Int {
         var charCount = 0
-        let fetchRequest = NSFetchRequest<NSFetchRequestResult>(entityName:"Book")
+        let fetchRequest = NSFetchRequest<Book>(entityName:"Book")
         fetchRequest.sortDescriptors = [NSSortDescriptor(key:"title", ascending:true)]
         do {
-            let results =  try coreDataMgr.mainMoc.fetch(fetchRequest)
-            let books = results as! [Book]
+            let books =  try coreDataMgr.mainMoc.fetch(fetchRequest)
             for book in books {
                 print(book.title!)
                 charCount += book.title!.characters.count
@@ -252,11 +246,10 @@ class CoreDataTests: XCTestCase
         }
     }
     fileprivate func deleteAllBooks(_ completion:(_ bSuccess:Bool) -> Void) {
-        let fetchRequest = NSFetchRequest<NSFetchRequestResult>(entityName:"Book")
+        let fetchRequest = NSFetchRequest<Book>(entityName:"Book")
         do {
             let backgroundMoc = coreDataMgr.temporaryBackgroundMOC(name: "DeleteBooks")
-            let results =  try backgroundMoc.fetch(fetchRequest)
-            let books = results as! [Book]
+            let books = try backgroundMoc.fetch(fetchRequest)
             for book in books {
                 backgroundMoc.delete(book)
             }

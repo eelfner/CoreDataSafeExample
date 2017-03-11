@@ -252,10 +252,9 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
         //print(__FUNCTION__)
         let backgroundMoc1 = coreDataSafe.temporaryBackgroundMOC(name:"T-BackgroundUpdate")
         
-        let fetchRequest1 = NSFetchRequest<NSFetchRequestResult>(entityName:"Book")
+        let fetchRequest1 = NSFetchRequest<Book>(entityName:"Book")
         do {
-            let results =  try backgroundMoc1.fetch(fetchRequest1)
-            let books = results as! [Book]
+            let books =  try backgroundMoc1.fetch(fetchRequest1)
             if books.count > 0 {
                 let randomIndex = Int(arc4random_uniform(UInt32(books.count)))
                 if randomIndex < books.count {
@@ -277,10 +276,9 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
         //print(__FUNCTION__)
         let backgroundMoc2 = coreDataSafe.temporaryBackgroundMOC(name:"T-BackgroundDelete")
         
-        let fetchRequest2 = NSFetchRequest<NSFetchRequestResult>(entityName:"Book")
+        let fetchRequest2 = NSFetchRequest<Book>(entityName:"Book")
         do {
-            let results =  try backgroundMoc2.fetch(fetchRequest2)
-            let books = results as! [Book]
+            let books =  try backgroundMoc2.fetch(fetchRequest2)
             if books.count > 0 {
                 let randomIndex = Int(arc4random_uniform(UInt32(books.count)))
                 let randomBook = books[randomIndex]
@@ -297,10 +295,9 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
         //print(__FUNCTION__)
         let backgroundMoc2 = coreDataSafe.temporaryBackgroundMOC(name:"T-BackgroundAdd")
         
-        let fetchRequest2 = NSFetchRequest<NSFetchRequestResult>(entityName:"Author")
+        let fetchRequest2 = NSFetchRequest<Author>(entityName:"Author")
         do {
-            let results =  try backgroundMoc2.fetch(fetchRequest2)
-            let authors = results as! [Author]
+            let authors =  try backgroundMoc2.fetch(fetchRequest2)
             
             if authors.count > 0 {
                 let randomIndex = Int(arc4random_uniform(UInt32(authors.count)))
@@ -322,20 +319,18 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
     }
 
     fileprivate func deleteAllBooks(_ completion:(_ bSuccess:Bool) -> Void) {
-        let fetchRequest = NSFetchRequest<NSFetchRequestResult>(entityName:"Book")
+        let fetchRequest = NSFetchRequest<Book>(entityName:"Book")
         do {
             let backgroundMoc = coreDataSafe.temporaryBackgroundMOC(name: "DeleteAll")
-            let results =  try backgroundMoc.fetch(fetchRequest)
-            let books = results as! [Book]
+            let books =  try backgroundMoc.fetch(fetchRequest)
             for book in books {
                 backgroundMoc.delete(book)
             }
             try backgroundMoc.save()
             print("Deleted [\(books.count)] books.")
             
-            let fetchRequest2 = NSFetchRequest<NSFetchRequestResult>(entityName:"Author")
-            let results2 =  try backgroundMoc.fetch(fetchRequest2)
-            let authors = results2 as! [Author]
+            let fetchRequest2 = NSFetchRequest<Author>(entityName:"Author")
+            let authors =  try backgroundMoc.fetch(fetchRequest2)
             for author in authors {
                 backgroundMoc.delete(author)
             }
