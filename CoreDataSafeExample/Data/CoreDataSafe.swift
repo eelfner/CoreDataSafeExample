@@ -56,8 +56,8 @@ DispatchQueue.global(qos: .background).async {
         //background updates
         try backgroundMoc.save()
     }
-    catch let error as NSError {
-        print("runBookUpdates error: \(error), \(error.userInfo)")
+    catch {
+        print("runBookUpdates error: \(error)")
     }
 }
 */
@@ -186,7 +186,7 @@ public class CoreDataSafe {
                     do {
                         try privateMoc.save()
                     }
-                    catch let error as NSError {
+                    catch {
                         let errorMsg = "CoreDataSafe.privateMoc.save() failed with error: [\(error)]"
                         if let handler = self.globalErrorHandler {
                             handler(error, errorMsg)
@@ -209,13 +209,13 @@ public class CoreDataSafe {
             try super.save() // Saves to MainMoc
             if let mainMoc = parent as? MainManagedObjectContext {
                 
-                var blockError:NSError? = nil // Must capture error within block and pass out.
+                var blockError:Error? = nil // Must capture error within block and pass out.
                 
                 mainMoc.performAndWait() {
                     do {
                         try mainMoc.save()
                     }
-                    catch let error as NSError {
+                    catch {
                         blockError = error
                     }
                 }

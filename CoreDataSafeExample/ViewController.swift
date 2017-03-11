@@ -267,8 +267,8 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
                 }
             }
         }
-        catch let error as NSError {
-            print("updateRandomBookInBackground error: \(error), \(error.userInfo)")
+        catch {
+            print("updateRandomBookInBackground error: \(error)")
         }
         logTimerEvents += 1
     }
@@ -287,8 +287,8 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
                 //print("book[\(randomIndex)] deleted")
             }
         }
-        catch let error as NSError {
-            print("runBookUpdates error: \(error), \(error.userInfo)")
+        catch {
+            print("runBookUpdates error: \(error)")
         }
     }
     fileprivate func addRandomBookInBackground() {
@@ -313,8 +313,8 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
                 //print("book[\(book.title)] added for \(randomAuthor.name)")
             }
         }
-        catch let error as NSError {
-            print("addRandomBookInBackground error: \(error), \(error.userInfo)")
+        catch {
+            print("addRandomBookInBackground error: \(error)")
         }
     }
 
@@ -339,8 +339,8 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
             
             completion(true)
         }
-        catch let error as NSError {
-            print("deleteAll error: \(error), \(error.userInfo)")
+        catch {
+            print("deleteAll error: \(error)")
             completion(false)
         }
     }
