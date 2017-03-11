@@ -43,17 +43,15 @@
  book.title = "The World According to Garp"
  coreDataSafe.saveMainMocAsync()
 
-let fetchRequest = NSFetchRequest(entityName:"Book")
-let results = try! coreDataSafe.mainMoc.executeFetchRequest(fetchRequest)
+let fetchRequest = NSFetchRequest<NSFetchRequestResult>(entityName:"Book")
+let results = try! coreDataSafe.mainMoc.fetch(fetchRequest)
 
-let backGroundQueue = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0)
-dispatch_async(backGroundQueue) {
+DispatchQueue.global(qos: .background).async {
     let backgroundMoc = coreDataSafe.temporaryBackgroundMOC(name:"T")
     
-    let fetchRequest = NSFetchRequest(entityName:"Book")
+    let fetchRequest = NSFetchRequest<Book>(entityName:"Book")
     do {
-        let results =  try backgroundMoc.executeFetchRequest(fetchRequest)
-        let books = results as! [Book]
+        let books = try backgroundMoc.executeFetchRequest(fetchRequest)
         ...
         //background updates
         try backgroundMoc.save()
