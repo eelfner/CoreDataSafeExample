@@ -20,7 +20,7 @@ class CoreDataTests: XCTestCase
 
         let expectation = self.expectation(description: "setupSuccess")
         let testBundle = Bundle(for: CoreDataTests.self)
-        coreDataMgr = CoreDataSafe(dbName:"TestModel", bundle:testBundle) {_ in
+        coreDataMgr = CoreDataSafe(dbName:"TestModel", bundle:testBundle) {
              self.deleteAllBooks() { _ in expectation.fulfill() }
         }
         
@@ -235,7 +235,7 @@ class CoreDataTests: XCTestCase
             let books =  try coreDataMgr.mainMoc.fetch(fetchRequest)
             for book in books {
                 print(book.title!)
-                charCount += book.title!.characters.count
+                charCount += book.title!.count
             }
             let updateCount = (charCount - books.count * 7) / 2
             return updateCount

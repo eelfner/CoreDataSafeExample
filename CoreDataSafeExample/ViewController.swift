@@ -11,7 +11,7 @@ import CoreData
 
 private let kTestAuthors = ["Joan Slater", "William Newman", "Ella Nash", "Penelope Bower", "Neil Cameron", "Patricia Murphy", "Vernon Rose", "Cary Hicks", "Edwin Osborne", "Jasmine Abbott", "Jared Collins"]
 private let kMaxTestBooksPerAuthor = 5
-private let kTestBooksWords = "Lorem ipsum dolor sit amet consectetur adipiscing elit sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur Excepteur sint occaecat cupidatat non proident sunt in culpa qui officia deserunt mollit anim id est laborum".characters.split(separator: " ").map(String.init)
+private let kTestBooksWords = "Lorem ipsum dolor sit amet consectetur adipiscing elit sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur Excepteur sint occaecat cupidatat non proident sunt in culpa qui officia deserunt mollit anim id est laborum".split(separator: " ").map(String.init)
 
 enum BackgroundDaemonState {case stopped, running, stoping}
 
@@ -232,7 +232,7 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
             }
         }
     }
-    func logTimerAction() {
+    @objc func logTimerAction() {
         let speed = ["Slow","Mod","Fast"][operationSpeed]
         notesLabel.text = "\(operationThreadCount)T@\(speed): \(logTimerEvents) events/sec"
         booksLabel.text = "Books: \(self.fetchedResultsController.fetchedObjects?.count ?? 0)"

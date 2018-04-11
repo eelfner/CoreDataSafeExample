@@ -86,7 +86,7 @@ public class CoreDataSafe {
         assert(modelURL != nil, "CoreDataMgr failed to find CoreData model: [\(dbName).momd].")
 
         let mom = NSManagedObjectModel(contentsOf: modelURL!)
-        assert(mom != nil, "CoreDataMgr init failed for: \(modelURL). Check for correct model file name.")
+        assert(mom != nil, "CoreDataMgr init failed for: \(String(describing:modelURL)). Check for correct model file name.")
         
         let psc = NSPersistentStoreCoordinator(managedObjectModel:mom!)
         
