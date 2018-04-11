@@ -63,6 +63,7 @@ DispatchQueue.global(qos: .background).async {
 */
 
 // Notes:
+//  -
 //  - Needs testing and work on migrations.
 //  - Failed migrations can result in: "autolayout engine from a background thread" errors because ???
 //  - MZ suggests error handling is over the top. The globalErrorHandler was added to be able allow the trapping of unforeseen untested errors rather than just swallowing them or crashing.
@@ -96,16 +97,23 @@ public class CoreDataSafe {
         let mainMoc = MainManagedObjectContext(concurrencyType:.mainQueueConcurrencyType)
         mainMoc.globalErrorHandler = globalErrorHandler // Share handler for background errors
         
-        // Override default (NSErrorMergePolicy) policy. Last in (by field) wins. There may be cases where this is not acceptable and error handling logic is needed to handle merge errors.
+        // Override default (NSErrorMergePolicy) policy. Last in (by field) wins. There may be cases where this is not acceptable and error handling logic is needed to handle merge errors. Note that errors: "repairing validation failure" will be logged, but objects will be remain valid.
+        // Without this set, you will end up with corrupt ManagedObjects.
         mainMoc.mergePolicy = NSMergePolicy(merge:.mergeByPropertyObjectTrumpMergePolicyType)
+        
+        // Other possible merge options.
+        //mainMoc.mergePolicy = NSMergePolicy(merge:.mergeByPropertyStoreTrumpMergePolicyType)
+        //mainMoc.mergePolicy = NSMergePolicy(merge:.rollbackMergePolicyType)
+        //mainMoc.mergePolicy = NSMergePolicy(merge:.overwriteMergePolicyType)
+
         mainMoc.parent = self.privateMoc // Saves flow up to parent
         self.mainMoc = mainMoc
         
         let docDir = FileManager.default.urls(for: .documentDirectory, in:.userDomainMask).first
         storeFileURL = NSURL(string: "\(dbName).sqlite", relativeTo: docDir)!
         
-        // Create SQLite store in background and call completion
-        DispatchQueue.global(qos: .background).async {
+        // Create SQLite store in background and call completion. Note: done with sync here, but could be async but must wait for completion prior to running operations against CoreData.
+        DispatchQueue.global(qos: .background).sync {
             do  {
                 let lightweightMigration = [NSMigratePersistentStoresAutomaticallyOption:true, NSInferMappingModelAutomaticallyOption:true]
                 try psc.addPersistentStore(ofType: NSSQLiteStoreType, configurationName:nil, at:self.storeFileURL as URL, options:lightweightMigration)
@@ -178,6 +186,13 @@ public class CoreDataSafe {
         
         fileprivate var globalErrorHandler:((Error, String) -> Void)? = nil
         
+        // Override to fetch added to first propogate save(). As noted in comments here: https://stackoverflow.com/a/39672893/4305146
+        // this seems like it should not be necessary and is counter productive. Without this, warnings: "Attempt to serialize store access on non-owning coordinator" will be logged, although with this design, no actual problems have been found.
+        override func fetch(_ request: NSFetchRequest<NSFetchRequestResult>) throws -> [Any] {
+            try save()
+            return try super.fetch(request)
+        }
+        
         override func save() throws {
             try super.save()
             
@@ -202,6 +217,14 @@ public class CoreDataSafe {
     }
     // Propogate save through to the main context.
     private class TemporaryBackgroundManagedObjectContext : NSManagedObjectContext {
+
+        // Override to fetch added to first propogate save(). As noted in comments here: https://stackoverflow.com/a/39672893/4305146
+        // this seems like it should not be necessary and is counter productive. Without this, warnings: "Attempt to serialize store access on non-owning coordinator" will be logged, although with this design, no actual problems have been found.
+        override func fetch(_ request: NSFetchRequest<NSFetchRequestResult>) throws -> [Any] {
+            try save()
+            return try super.fetch(request)
+        }
+        
         override func save() throws {
             assert(self.concurrencyType == .privateQueueConcurrencyType, "Sanity check on TemporaryBackgroundManagedObjectContext")
             assert(self.parent is MainManagedObjectContext, "Sanity check on TemporaryBackgroundManagedObjectContext")
